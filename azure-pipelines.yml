@@ -1,0 +1,35 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  acrName: 'DockerHeroes'
+  imageName: 'heroes_backend'
+  acrLoginServer: 'dockerheroes.azurecr.io'
+  ACR_USERNAME: 'DockerHeroes'
+  ACR_PASSWORD: 'DbwvOpxyX077dCU23/kgUnxSC7dd10oUEDW+kvc4av+ACRAbl3Va'
+
+steps:
+- script: |
+    docker login $(acrLoginServer) -u $(ACR_USERNAME) -p $(ACR_PASSWORD)
+  displayName: 'Docker Login'
+
+- script: |
+    docker build -t $(acrLoginServer)/$(imageName):latest .
+  displayName: 'Docker Build'
+
+- script: |
+    docker push $(acrLoginServer)/$(imageName):latest
+  displayName: 'Docker Push'
+
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'sc-anael-ai3'
+    appType: 'webAppContainer'
+    WebAppName: 'heroesBakend'
+    DockerNamespace: 'dockerheroes.azurecr.io'
+    DockerRepository: 'heroes_backend'
+    DockerImageTag: 'latest'
